@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#000000">
-<title>StageEye v0.7 AUTO Director · Ken Burns</title>
+<title>StageEye v0.8 AUTO Director · Soft Crossfade</title>
 <style>
 :root { color-scheme: dark; }
 * { box-sizing: border-box; }
@@ -17,18 +17,17 @@ html, body {
   touch-action: manipulation;
 }
 #stage { position: fixed; inset: 0; overflow: hidden; background: #000; }
-#video {
+#videoA, #videoB {
   position: absolute; left: 50%; top: 50%;
   width: 100%; height: 100%; object-fit: cover;
   transform: translate(-50%, -50%) scale(1);
   transform-origin: center center;
-  transition: transform 7s ease-out;
+  transition: transform 7s ease-out, opacity 1.4s ease-in-out;
   background: #000;
 }
-#fadeLayer {
-  position: absolute; inset: 0; background: #000; opacity: 0;
-  pointer-events: none; z-index: 10; transition: opacity .35s ease;
-}
+#videoA { z-index: 1; opacity: 1; }
+#videoB { z-index: 2; opacity: 0; }
+/* Crossfade two differently framed copies of the same live camera feed. */
 /* アングル名・ステータス表示を画面上部に出さない */
 #status { display: none !important; }
 #controls {
@@ -60,11 +59,11 @@ button:disabled { opacity: .45; }
   #status { top: max(10px, env(safe-area-inset-top)); }
 }
 </style>
-<script type="text/javascript" nonce="9fbb8002d6cb41a3b18e3dd4e8e" src="//local.adguard.org?ts=1791994876458&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000001e248207bf05bbdfa28906c3%26fn%3DStageEye_v0.7_AUTO_Director_KenBurns_no-angle-label.html%26cd%3Dattachment%26ts%3D497777%26p%3Dfs%26cid%3D1%26sig%3D4f40445f3214b05b10e3e4c27a5f4de679dbaf64449c167ec0c77a7288ebe12d%26v%3D0&amp;app=chrome.exe&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script><script type="text/javascript" nonce="9fbb8002d6cb41a3b18e3dd4e8e" src="//local.adguard.org?ts=1791994876458&amp;name=AdGuard%20Extra&amp;name=AdGuard%20Popup%20Blocker&amp;type=user-script"></script></head>
+<script type="text/javascript" nonce="9fbb8002d6cb41a3b18e3dd4e8e" src="//local.adguard.org?ts=1791994876458&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_0000000053c08211b4a9af91f96569ed%26fn%3DStageEye_v0.8_AUTO_Director_Soft_Crossfade.html%26cd%3Dattachment%26ts%3D497777%26p%3Dfs%26cid%3D1%26sig%3Dddf0b5f61ce8710a2a19bf3c4b54b849dcd326823abfe1a5d9ad35d6817f66f9%26v%3D0&amp;app=chrome.exe&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script><script type="text/javascript" nonce="9fbb8002d6cb41a3b18e3dd4e8e" src="//local.adguard.org?ts=1791994876458&amp;name=AdGuard%20Extra&amp;name=AdGuard%20Popup%20Blocker&amp;type=user-script"></script></head>
 <body>
 <div id="stage">
-  <video id="video" autoplay playsinline muted></video>
-  <div id="fadeLayer"></div>
+  <video id="videoA" autoplay playsinline muted></video>
+  <video id="videoB" autoplay playsinline muted></video>
   <div id="status" role="status" aria-live="polite">CAMERA READY · CAM1 / CAM2</div>
   <div id="controls">
     <button id="cam1Btn" type="button">CAM1</button>
@@ -76,8 +75,10 @@ button:disabled { opacity: .45; }
 (() => {
   "use strict";
 
-  const video = document.getElementById("video");
-  const fadeLayer = document.getElementById("fadeLayer");
+  const videoA = document.getElementById("videoA");
+  const videoB = document.getElementById("videoB");
+  let activeVideo = videoA;
+  let standbyVideo = videoB;
   const controls = document.getElementById("controls");
   const statusEl = document.getElementById("status");
   const autoBtn = document.getElementById("autoBtn");
@@ -147,24 +148,31 @@ button:disabled { opacity: .45; }
 
     const startX = Math.round(window.innerWidth * shot.x);
     const endX = Math.round(window.innerWidth * (shot.x + shot.drift));
+    const incoming = standbyVideo;
+    const outgoing = activeVideo;
 
-    // Brief fade to black masks the repositioning, as in the original v0.5.
-    fadeLayer.style.opacity = "1";
+    // Prepare the next crop invisibly, then softly crossfade between the two
+    // copies of the same camera stream. This blends framing changes without blackouts.
+    incoming.style.transition = "none";
+    incoming.style.opacity = "0";
+    incoming.style.transform =
+      `translate(-50%, -50%) translateX(${startX}px) scale(${shot.heroZoom})`;
+
+    // Force the initial framing to be applied before starting the animation.
+    void incoming.offsetWidth;
 
     scheduleTransition(() => {
-      video.style.transition = "none";
-      video.style.transform =
-        `translate(-50%, -50%) translateX(${startX}px) scale(${shot.heroZoom})`;
-    }, 180);
-
-    scheduleTransition(() => {
-      fadeLayer.style.opacity = "0";
+      incoming.style.transition = "opacity 1.4s ease-in-out, transform 7s ease-out";
+      outgoing.style.transition = "opacity 1.4s ease-in-out, transform 7s ease-out";
+      incoming.style.opacity = "1";
+      outgoing.style.opacity = "0";
       // Slow zoom-out plus horizontal drift creates the Ken Burns Effect.
-      video.style.transition = "transform 7s ease-out";
-      video.style.transform =
+      incoming.style.transform =
         `translate(-50%, -50%) translateX(${endX}px) scale(${shot.zoom})`;
+      activeVideo = incoming;
+      standbyVideo = outgoing;
       // Deliberately do not display the current angle name/status.
-    }, 350);
+    }, 40);
   }
 
   function stopAuto() {
@@ -236,8 +244,9 @@ button:disabled { opacity: .45; }
 
       currentStream = stream;
       activeFacing = facing;
-      video.srcObject = stream;
-      await video.play();
+      videoA.srcObject = stream;
+      videoB.srcObject = stream;
+      await Promise.all([videoA.play(), videoB.play()]);
 
       // A camera change starts from the safe wide framing.
       applyShot("wide");
