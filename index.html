@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#000000">
-<title>StageEye v0.6 AUTO Director</title>
+<title>StageEye v0.7 AUTO Director · Ken Burns</title>
 <style>
 :root { color-scheme: dark; }
 * { box-sizing: border-box; }
@@ -22,7 +22,7 @@ html, body {
   width: 100%; height: 100%; object-fit: cover;
   transform: translate(-50%, -50%) scale(1);
   transform-origin: center center;
-  transition: transform 5s ease-in-out;
+  transition: transform 7s ease-out;
   background: #000;
 }
 #fadeLayer {
@@ -60,7 +60,7 @@ button:disabled { opacity: .45; }
   #status { top: max(10px, env(safe-area-inset-top)); }
 }
 </style>
-<script type="text/javascript" nonce="9fbb8002d6cb41a3b18e3dd4e8e" src="//local.adguard.org?ts=1791991275672&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000007e6881f58c466314794a5648%26fn%3DStageEye_v0.6_AUTO_Director_no-angle-label.html%26cd%3Dattachment%26ts%3D497776%26p%3Dfs%26cid%3D1%26sig%3D201c9651364a2fee292be24d53f2c90fc27b5f09eaa773ccc679cab0009b3ea8%26v%3D0&amp;app=chrome.exe&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script><script type="text/javascript" nonce="9fbb8002d6cb41a3b18e3dd4e8e" src="//local.adguard.org?ts=1791991275672&amp;name=AdGuard%20Extra&amp;name=AdGuard%20Popup%20Blocker&amp;type=user-script"></script></head>
+<script type="text/javascript" nonce="9fbb8002d6cb41a3b18e3dd4e8e" src="//local.adguard.org?ts=1791994876458&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000001e248207bf05bbdfa28906c3%26fn%3DStageEye_v0.7_AUTO_Director_KenBurns_no-angle-label.html%26cd%3Dattachment%26ts%3D497777%26p%3Dfs%26cid%3D1%26sig%3D4f40445f3214b05b10e3e4c27a5f4de679dbaf64449c167ec0c77a7288ebe12d%26v%3D0&amp;app=chrome.exe&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script><script type="text/javascript" nonce="9fbb8002d6cb41a3b18e3dd4e8e" src="//local.adguard.org?ts=1791994876458&amp;name=AdGuard%20Extra&amp;name=AdGuard%20Popup%20Blocker&amp;type=user-script"></script></head>
 <body>
 <div id="stage">
   <video id="video" autoplay playsinline muted></video>
@@ -106,13 +106,16 @@ button:disabled { opacity: .45; }
     { shot: "wide",  time: 3500 }
   ];
 
+  // Ken Burns-style framing: begin with a tighter hero crop, then drift/zoom
+  // gently over 7 seconds. Horizontal positions are proportional to viewport width.
   const shots = {
-    wide:  { zoom: 1.00, x: 0,    label: "WIDE · STAGE" },
-    bass:  { zoom: 1.65, x: 0.20, label: "BASS · CLOSE" },
-    vocal: { zoom: 1.55, x: 0,    label: "VOCAL · CLOSE" },
-    piano: { zoom: 1.60, x: -0.20, label: "PIANO · CLOSE" }
+    wide:  { zoom: 1.05, heroZoom: 1.12, x: 0,     drift: 0,     label: "WIDE" },
+    bass:  { zoom: 1.55, heroZoom: 2.30, x: 0.20,  drift: -0.067, label: "BASS" },
+    vocal: { zoom: 1.65, heroZoom: 2.00, x: 0,     drift: 0.033,  label: "VOCAL" },
+    piano: { zoom: 1.55, heroZoom: 2.20, x: -0.20, drift: 0.067,  label: "PIANO" }
   };
 
+  // Status text is intentionally never shown on screen.
   function setStatus(message) {
     statusEl.textContent = message;
   }
@@ -142,21 +145,26 @@ button:disabled { opacity: .45; }
     lastShot = name;
     clearTransitionTimers();
 
-    // Use a fraction of the current viewport width rather than fixed pixels.
-    const shiftPx = Math.round(window.innerWidth * shot.x);
+    const startX = Math.round(window.innerWidth * shot.x);
+    const endX = Math.round(window.innerWidth * (shot.x + shot.drift));
+
+    // Brief fade to black masks the repositioning, as in the original v0.5.
     fadeLayer.style.opacity = "1";
 
     scheduleTransition(() => {
       video.style.transition = "none";
       video.style.transform =
-        `translate(-50%, -50%) translateX(${shiftPx}px) scale(${shot.zoom})`;
+        `translate(-50%, -50%) translateX(${startX}px) scale(${shot.heroZoom})`;
     }, 180);
 
     scheduleTransition(() => {
       fadeLayer.style.opacity = "0";
-      video.style.transition = "transform 5s ease-in-out";
-      setStatus(autoMode ? `AUTO · ${shot.label}` : shot.label);
-    }, 420);
+      // Slow zoom-out plus horizontal drift creates the Ken Burns Effect.
+      video.style.transition = "transform 7s ease-out";
+      video.style.transform =
+        `translate(-50%, -50%) translateX(${endX}px) scale(${shot.zoom})`;
+      // Deliberately do not display the current angle name/status.
+    }, 350);
   }
 
   function stopAuto() {
