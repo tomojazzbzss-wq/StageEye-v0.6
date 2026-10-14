@@ -29,13 +29,8 @@ html, body {
   position: absolute; inset: 0; background: #000; opacity: 0;
   pointer-events: none; z-index: 10; transition: opacity .35s ease;
 }
-#status {
-  position: absolute; top: max(12px, env(safe-area-inset-top));
-  left: 50%; transform: translateX(-50%);
-  z-index: 25; padding: 8px 12px; border-radius: 999px;
-  background: rgba(0,0,0,.65); color: #eee; font-size: 13px;
-  letter-spacing: .04em; white-space: nowrap; pointer-events: none;
-}
+/* アングル名・ステータス表示を画面上部に出さない */
+#status { display: none !important; }
 #controls {
   position: absolute; left: 0; right: 0;
   bottom: max(12px, env(safe-area-inset-bottom));
@@ -65,7 +60,7 @@ button:disabled { opacity: .45; }
   #status { top: max(10px, env(safe-area-inset-top)); }
 }
 </style>
-<script type="text/javascript" nonce="9fbb8002d6cb41a3b18e3dd4e8e" src="//local.adguard.org?ts=1791988770032&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000000ee882078cc041181d0dd99a%26fn%3DStageEye_v0.6_AUTO_Director.html%26cd%3Dattachment%26ts%3D497774%26p%3Dfs%26cid%3D1%26sig%3D3691e76f5ff9fead951ac1474c3e854cffc6cd55cac49ce9cb5cce748abdecb6%26v%3D0&amp;app=chrome.exe&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script><script type="text/javascript" nonce="9fbb8002d6cb41a3b18e3dd4e8e" src="//local.adguard.org?ts=1791988770032&amp;name=AdGuard%20Extra&amp;name=AdGuard%20Popup%20Blocker&amp;type=user-script"></script></head>
+<script type="text/javascript" nonce="9fbb8002d6cb41a3b18e3dd4e8e" src="//local.adguard.org?ts=1791991275672&amp;type=content-script&amp;dmn=chatgpt.com&amp;url=https%3A%2F%2Fchatgpt.com%2Fbackend-api%2Festuary%2Fcontent%3Fid%3Dfile_000000007e6881f58c466314794a5648%26fn%3DStageEye_v0.6_AUTO_Director_no-angle-label.html%26cd%3Dattachment%26ts%3D497776%26p%3Dfs%26cid%3D1%26sig%3D201c9651364a2fee292be24d53f2c90fc27b5f09eaa773ccc679cab0009b3ea8%26v%3D0&amp;app=chrome.exe&amp;css=2&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script><script type="text/javascript" nonce="9fbb8002d6cb41a3b18e3dd4e8e" src="//local.adguard.org?ts=1791991275672&amp;name=AdGuard%20Extra&amp;name=AdGuard%20Popup%20Blocker&amp;type=user-script"></script></head>
 <body>
 <div id="stage">
   <video id="video" autoplay playsinline muted></video>
